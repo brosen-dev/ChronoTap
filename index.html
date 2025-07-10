@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ChronoTap - Test your knowledge of when historical events occurred!">
+    <meta property="og:title" content="ChronoTap - Historical Timeline Game">
+    <meta property="og:description" content="Guess when historical events happened in this fun timeline game!">
+    <meta property="og:type" content="website">
+    <title>ChronoTap - Historical Timeline Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            color: #ffd700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #e8e8e8;
+            margin-bottom: 5px;
+        }
+
+        .score-container {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+        }
+
+        .score-item {
+            background: rgba(255,255,255,0.15);
+            padding: 12px 24px;
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .game-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 40px;
+            backdrop-filter: blur(15px);
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .question-text {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 6px solid #ffd700;
+            line-height: 1.4;
+        }
+
+        .era-info {
+            background: rgba(52, 73, 94, 0.8);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            border-left: 4px solid #3498db;
+        }
+
+        .timeline-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .timeline-canvas {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(90deg, #2c3e50, #34495e, #2c3e50);
+            border-radius: 10px;
+            cursor: crosshair;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #bdc3c7;
+        }
+
+        .year-input-container {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .year-input {
+            font-size: 1.5em;
+            padding: 12px 20px;
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.9);
+            color: #2c3e50;
+            width: 150px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .year-input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .guess-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #e74c3c, #c0392b);
+            top: 0;
+            transform: translateX(-50%);
+            animation: pulse 1.5s infinite;
+        }
+
+        .guess-marker::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 12px solid #e74c3c;
+        }
+
+        .answer-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #27ae60, #229954);
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .answer-marker::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 12px solid #27ae60;
+        }
+
+        .accuracy-bar {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.3), transparent);
+            top: 0;
+            border-radius: 5px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .next-btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+
+        .next-btn:hover {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+        }
+
+        .feedback {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.3);
+        }
+
+        .feedback.close {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.3);
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3);
+        }
+
+        .feedback.neutral {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .accuracy-text {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .explanation-text {
+            font-size: 1em;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .easy { background: #27ae60; }
+        .medium { background: #f39c12; }
+        .hard { background: #e74c3c; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .score-container { flex-wrap: wrap; gap: 15px; }
+            .game-container { padding: 20px; }
+            .question-text { font-size: 1.4em; }
+            .year-input-container { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏰ ChronoTap</h1>
+        <p>Test your knowledge of when historical events occurred!</p>
+        <p style="font-size: 1em; color: #bdc3c7;">Click on the timeline or enter a year to make your guess</p>
+    </div>
+
+    <div class="score-container">
+        <div class="score-item">
+            <strong>Score: <span id="score">0</span></strong>
+        </div>
+        <div class="score-item">
+            <strong>Question: <span id="questionNumber">1</span>/10</strong>
+        </div>
+        <div class="score-item">
+            <strong>Streak: <span id="streak">0</span></strong>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="era-info" id="eraInfo"></div>
+        <div class="question-text" id="questionText"></div>
+        
+        <div class="timeline-container">
+            <div class="timeline-canvas" id="timelineCanvas"></div>
+            <div class="timeline-labels">
+                <span id="startYear">1000</span>
+                <span id="endYear">2000</span>
+            </div>
+        </div>
+
+        <div class="year-input-container">
+            <label for="yearInput" style="font-size: 1.2em; font-weight: bold;">Your Guess:</label>
+            <input type="number" id="yearInput" class="year-input" placeholder="Year" min="1" max="2025">
+            <span style="font-size: 1.1em; color: #bdc3c7;">CE</span>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="submitBtn" disabled>Submit Guess</button>
+            <button class="btn next-btn" id="nextBtn" style="display: none;">Next Question</button>
+        </div>
+
+        <div class="feedback neutral" id="feedback">
+            <div class="accuracy-text">Click on the timeline or enter a year to make your guess!</div>
+        </div>
+    </div>
+
+    <script>
+        // Historical events database
+        const historicalEvents = [
+            {
+                event: "The Great Fire of London destroyed much of medieval London",
+                year: 1666,
+                era: "Early Modern Period",
+                timeRange: { start: 1600, end: 1700 },
+                explanation: "The Great Fire of London began on September 2, 1666, and burned for four days, destroying 13,200 houses and 87 churches.",
+                difficulty: "medium"
+            },
+            {
+                event: "The American Declaration of Independence was signed",
+                year: 1776,
+                era: "Age of Revolution",
+                timeRange: { start: 1750, end: 1800 },
+                explanation: "The Declaration of Independence was adopted on July 4, 1776, marking the birth of the United States of America.",
+                difficulty: "easy"
+            },
+            {
+                event: "The Battle of Hastings changed English history forever",
+                year: 1066,
+                era: "Medieval Period",
+                timeRange: { start: 1000, end: 1100 },
+                explanation: "The Battle of Hastings on October 14, 1066, saw William the Conqueror defeat Harold II, beginning Norman rule in England.",
+                difficulty: "medium"
+            },
+            {
+                event: "The printing press was invented by Johannes Gutenberg",
+                year: 1440,
+                era: "Late Medieval Period",
+                timeRange: { start: 1400, end: 1500 },
+                explanation: "Gutenberg's printing press around 1440 revolutionized the spread of knowledge and information in Europe.",
+                difficulty: "medium"
+            },
+            {
+                event: "The Berlin Wall fell, symbolizing the end of the Cold War",
+                year: 1989,
+                era: "Late 20th Century",
+                timeRange: { start: 1980, end: 2000 },
+                explanation: "The Berlin Wall fell on November 9, 1989, reuniting East and West Berlin and marking the beginning of German reunification.",
+                difficulty: "easy"
+            },
+            {
+                event: "The Black Death pandemic devastated Europe",
+                year: 1347,
+                era: "Late Medieval Period",
+                timeRange: { start: 1300, end: 1400 },
+                explanation: "The Black Death arrived in Europe in 1347 and killed an estimated 30-60% of Europe's population over the next few years.",
+                difficulty: "hard"
+            },
+            {
+                event: "Christopher Columbus reached the Americas",
+                year: 1492,
+                era: "Age of Exploration",
+                timeRange: { start: 1450, end: 1550 },
+                explanation: "Columbus landed in the Bahamas on October 12, 1492, beginning European colonization of the Americas.",
+                difficulty: "easy"
+            },
+            {
+                event: "The French Revolution began with the storming of the Bastille",
+                year: 1789,
+                era: "Age of Revolution",
+                timeRange: { start: 1750, end: 1800 },
+                explanation: "The French Revolution began in 1789, with the storming of the Bastille on July 14 becoming its symbolic start.",
+                difficulty: "easy"
+            },
+            {
+                event: "The first successful powered flight by the Wright Brothers",
+                year: 1903,
+                era: "Early 20th Century",
+                timeRange: { start: 1900, end: 1920 },
+                explanation: "Orville and Wilbur Wright achieved the first powered flight on December 17, 1903, at Kitty Hawk, North Carolina.",
+                difficulty: "easy"
+            },
+            {
+                event: "The Magna Carta was signed, limiting royal power",
+                year: 1215,
+                era: "Medieval Period",
+                timeRange: { start: 1200, end: 1300 },
+                explanation: "The Magna Carta was signed on June 15, 1215, establishing the principle that even kings must follow the law.",
+                difficulty: "medium"
+            },
+            {
+                event: "The construction of the Great Wall of China began",
+                year: 220,
+                era: "Ancient Period",
+                timeRange: { start: 1, end: 500 },
+                explanation: "Emperor Qin Shi Huang began connecting existing walls around 220 BCE to create the Great Wall of China.",
+                difficulty: "hard"
+            },
+            {
+                event: "The fall of the Western Roman Empire",
+                year: 476,
+                era: "Late Antiquity",
+                timeRange: { start: 400, end: 600 },
+                explanation: "The last Western Roman Emperor, Romulus Augustulus, was deposed in 476 CE, marking the end of the Western Roman Empire.",
+                difficulty: "hard"
+            },
+            {
+                event: "World War II ended with Japan's surrender",
+                year: 1945,
+                era: "World War II",
+                timeRange: { start: 1940, end: 1950 },
+                explanation: "World War II ended on September 2, 1945, when Japan formally surrendered aboard the USS Missouri.",
+                difficulty: "easy"
+            },
+            {
+                event: "The assassination of Archduke Franz Ferdinand sparked World War I",
+                year: 1914,
+                era: "Early 20th Century",
+                timeRange: { start: 1910, end: 1920 },
+                explanation: "Archduke Franz Ferdinand was assassinated on June 28, 1914, in Sarajevo, triggering a chain of events that led to World War I.",
+                difficulty: "easy"
+            },
+            {
+                event: "The Crusades began with Pope Urban II's call to arms",
+                year: 1095,
+                era: "Medieval Period",
+                timeRange: { start: 1000, end: 1200 },
+                explanation: "Pope Urban II called for the First Crusade in 1095, beginning nearly 200 years of religious wars.",
+                difficulty: "medium"
+            }
+        ];
+
+        // Game state
+        let currentQuestion = 0;
+        let score = 0;
+        let streak = 0;
+        let userGuess = null;
+        let gameQuestions = [];
+        let currentTimeRange = { start: 1000, end: 2000 };
+
+        // Elements
+        const canvas = document.getElementById('timelineCanvas');
+        const yearInput = document.getElementById('yearInput');
+
+        // Initialize game
+        function initGame() {
+            gameQuestions = [...historicalEvents].sort(() => Math.random() - 0.5).slice(0, 10);
+            loadQuestion();
+            setupEventListeners();
+        }
+
+        function loadQuestion() {
+            const question = gameQuestions[currentQuestion];
+            document.getElementById('questionText').innerHTML = 
+                question.event + `<span class="difficulty-badge ${question.difficulty}">${question.difficulty.toUpperCase()}</span>`;
+            document.getElementById('eraInfo').textContent = question.era;
+            document.getElementById('questionNumber').textContent = currentQuestion + 1;
+            
+            // Set appropriate time range for the question
+            currentTimeRange = question.timeRange;
+            document.getElementById('startYear').textContent = currentTimeRange.start;
+            document.getElementById('endYear').textContent = currentTimeRange.end;
+            
+            // Reset UI
+            document.getElementById('feedback').innerHTML = '<div class="accuracy-text">Click on the timeline or enter a year to make your guess!</div>';
+            document.getElementById('feedback').className = 'feedback neutral';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('nextBtn').style.display = 'none';
+            
+            yearInput.value = '';
+            yearInput.min = currentTimeRange.start;
+            yearInput.max = currentTimeRange.end;
+            
+            userGuess = null;
+            drawTimeline();
+        }
+
+        function drawTimeline() {
+            canvas.innerHTML = '';
+            
+            // Add decade markers
+            const range = currentTimeRange.end - currentTimeRange.start;
+            const decades = Math.floor(range / 10);
+            
+            for (let i = 0; i <= decades; i++) {
+                const position = (i / decades) * 100;
+                const decade = currentTimeRange.start + (i * 10);
+                
+                const marker = document.createElement('div');
+                marker.style.position = 'absolute';
+                marker.style.left = position + '%';
+                marker.style.top = '0';
+                marker.style.width = '1px';
+                marker.style.height = '100%';
+                marker.style.background = 'rgba(255,255,255,0.2)';
+                marker.style.transform = 'translateX(-50%)';
+                canvas.appendChild(marker);
+            }
+        }
+
+        function yearToPosition(year) {
+            const range = currentTimeRange.end - currentTimeRange.start;
+            const position = (year - currentTimeRange.start) / range;
+            return Math.max(0, Math.min(1, position)) * 100;
+        }
+
+        function positionToYear(position) {
+            const range = currentTimeRange.end - currentTimeRange.start;
+            return Math.round(currentTimeRange.start + (position * range));
+        }
+
+        function updateGuess(year) {
+            userGuess = year;
+            yearInput.value = year;
+            
+            // Remove existing markers
+            const existingMarkers = canvas.querySelectorAll('.guess-marker');
+            existingMarkers.forEach(marker => marker.remove());
+            
+            // Add guess marker
+            const marker = document.createElement('div');
+            marker.className = 'guess-marker';
+            marker.style.left = yearToPosition(year) + '%';
+            canvas.appendChild(marker);
+            
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('feedback').innerHTML = '<div class="accuracy-text">Click Submit to check your answer!</div>';
+        }
+
+        function calculateScore(yearDifference) {
+            const maxDifference = currentTimeRange.end - currentTimeRange.start;
+            const normalizedDifference = Math.abs(yearDifference) / maxDifference;
+            return Math.max(0, Math.round(1000 * (1 - normalizedDifference)));
+        }
+
+        function showResult(yearDifference, points) {
+            const question = gameQuestions[currentQuestion];
+            const correctYear = question.year;
+            
+            // Add answer marker
+            const answerMarker = document.createElement('div');
+            answerMarker.className = 'answer-marker';
+            answerMarker.style.left = yearToPosition(correctYear) + '%';
+            canvas.appendChild(answerMarker);
+            
+            // Add accuracy bar showing the difference
+            if (userGuess) {
+                const guessPos = yearToPosition(userGuess);
+                const answerPos = yearToPosition(correctYear);
+                const startPos = Math.min(guessPos, answerPos);
+                const width = Math.abs(guessPos - answerPos);
+                
+                const accuracyBar = document.createElement('div');
+                accuracyBar.className = 'accuracy-bar';
+                accuracyBar.style.left = startPos + '%';
+                accuracyBar.style.width = width + '%';
+                canvas.appendChild(accuracyBar);
+            }
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            const absYearDiff = Math.abs(yearDifference);
+            
+            let accuracyText = '';
+            let explanationText = question.explanation;
+            
+            if (absYearDiff === 0) {
+                feedback.className = 'feedback correct';
+                accuracyText = `🎯 Perfect! Exactly ${correctYear} CE`;
+                streak++;
+            } else if (absYearDiff <= 5) {
+                feedback.className = 'feedback correct';
+                accuracyText = `🎉 Excellent! Off by only ${absYearDiff} year${absYearDiff > 1 ? 's' : ''} (${correctYear} CE)`;
+                streak++;
+            } else if (absYearDiff <= 20) {
+                feedback.className = 'feedback correct';
+                accuracyText = `👍 Very good! Off by ${absYearDiff} years (${correctYear} CE)`;
+                streak++;
+            } else if (absYearDiff <= 50) {
+                feedback.className = 'feedback close';
+                accuracyText = `📅 Close! Off by ${absYearDiff} years (${correctYear} CE)`;
+                streak = Math.max(0, streak - 1);
+            } else {
+                feedback.className = 'feedback incorrect';
+                accuracyText = `📚 Off by ${absYearDiff} years (correct: ${correctYear} CE)`;
+                streak = 0;
+            }
+            
+            feedback.innerHTML = `
+                <div class="accuracy-text">${accuracyText}</div>
+                <div class="explanation-text">${explanationText}</div>
+                <div style="margin-top: 10px; font-weight: bold;">+${points} points</div>
+            `;
+            
+            // Update score
+            score += points;
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+            
+            // Show next button
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').disabled = true;
+            yearInput.disabled = true;
+        }
+
+        function setupEventListeners() {
+            // Timeline click
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const position = clickX / rect.width;
+                const year = positionToYear(position);
+                updateGuess(year);
+            });
+
+            // Year input
+            yearInput.addEventListener('input', (e) => {
+                const year = parseInt(e.target.value);
+                if (year && year >= currentTimeRange.start && year <= currentTimeRange.end) {
+                    updateGuess(year);
+                }
+            });
+
+            // Submit button
+            document.getElementById('submitBtn').addEventListener('click', () => {
+                if (!userGuess) return;
+                
+                const question = gameQuestions[currentQuestion];
+                const yearDifference = userGuess - question.year;
+                const points = calculateScore(yearDifference);
+                
+                showResult(yearDifference, points);
+            });
+
+            // Next button
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                currentQuestion++;
+                if (currentQuestion < gameQuestions.length) {
+                    yearInput.disabled = false;
+                    loadQuestion();
+                } else {
+                    // Game over
+                    document.getElementById('questionText').innerHTML = '🏆 Game Complete!';
+                    document.getElementById('eraInfo').textContent = '';
+                    document.getElementById('feedback').innerHTML = `
+                        <div class="accuracy-text">Final Score: ${score} points</div>
+                        <div class="explanation-text">You achieved a best streak of ${streak} questions!</div>
+                    `;
+                    document.getElementById('feedback').className = 'feedback correct';
+                    document.getElementById('nextBtn').style.display = 'none';
+                    
+                    // Add restart button
+                    const restartBtn = document.createElement('button');
+                    restartBtn.textContent = 'Play Again';
+                    restartBtn.className = 'btn';
+                    restartBtn.onclick = () => location.reload();
+                    document.querySelector('.controls').appendChild(restartBtn);
+                }
+            });
+        }
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
